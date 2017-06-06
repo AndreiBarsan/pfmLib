@@ -56,7 +56,7 @@ void swapBytes(float* fptr) { // if endianness doesn't agree, swap bytes
  *      im:     type: Mat       description: image destination
  *      path:   type: string    description: file path to pfm file
  */
-int ReadFilePFM(Mat &im, string path){
+int ReadFilePFM(Mat &im, string path, bool verbose){
 
     // create fstream object to read in pfm file 
     // open the file in binary
@@ -80,12 +80,14 @@ int ReadFilePFM(Mat &im, string path){
     int littleEndianMachine = littleendian();
     int needSwap = (littleEndianFile != littleEndianMachine);
 
-    cout << setfill('=') << setw(19) << "=" << endl;
-    cout << "Reading image to pfm file: " << path << endl;
-    cout << "Little Endian?: "  << ((needSwap) ? "false" : "true")   << endl;
-    cout << "width: "           << width                             << endl;
-    cout << "height: "          << height                            << endl;
-    cout << "scale: "           << scalef                            << endl;
+    if (verbose) {
+        cout << setfill('=') << setw(19) << "=" << endl;
+        cout << "Reading image to pfm file: " << path << endl;
+        cout << "Little Endian?: " << ((needSwap) ? "false" : "true") << endl;
+        cout << "width: " << width << endl;
+        cout << "height: " << height << endl;
+        cout << "scale: " << scalef << endl;
+    }
 
     // skip SINGLE newline character after reading third arg
     char c = file.get();
@@ -93,18 +95,20 @@ int ReadFilePFM(Mat &im, string path){
         c = file.get();
     if (c != '\n') {
         if (c == ' ' || c == '\t' || c == '\r'){
-            cout << "newline expected";
+            cerr << "newline expected";
             return -1;
         }
         else{
-        	cout << "whitespace expected";
+        	cerr << "whitespace expected";
             return -1;
         }
     }
     
-    if(bands == "Pf"){          // handle 1-band image 
-        cout << "Reading grayscale image (1-band)" << endl; 
-        cout << "Reading into CV_32FC1 image" << endl;
+    if(bands == "Pf"){          // handle 1-band image
+        if (verbose) {
+            cout << "Reading grayscale image (1-band)" << endl;
+            cout << "Reading into CV_32FC1 image" << endl;
+        }
         im = Mat::zeros(height, width, CV_32FC1);
         for (int i=height-1; i >= 0; --i) {
             for(int j=0; j < width; ++j){
@@ -116,8 +120,10 @@ int ReadFilePFM(Mat &im, string path){
             }
         }
     }else if(bands == "PF"){    // handle 3-band image
-        cout << "Reading color image (3-band)" << endl;
-        cout << "Reading into CV_32FC3 image" << endl; 
+        if (verbose) {
+            cout << "Reading color image (3-band)" << endl;
+            cout << "Reading into CV_32FC3 image" << endl;
+        }
         im = Mat::zeros(height, width, CV_32FC3);
         for (int i=height-1; i >= 0; --i) {
             for(int j=0; j < width; ++j){
@@ -131,10 +137,13 @@ int ReadFilePFM(Mat &im, string path){
             }
         }
     }else{
-        cout << "unknown bands description";
+        cerr << "unknown bands description";
         return -1;
     }
-    cout << setfill('=') << setw(19) << "=" << endl << endl;
+
+    if (verbose) {
+        cout << setfill('=') << setw(19) << "=" << endl << endl;
+    }
     return 0;
 }
 
@@ -149,14 +158,13 @@ int ReadFilePFM(Mat &im, string path){
  *      path:   type: string    description: file path to pfm file
  *      scalef: type: float     description: scale factor and endianness 
  */
-int WriteFilePFM(const Mat &im, string path, float scalef=1/255.0){
+int WriteFilePFM(const Mat &im, string path, float scalef, bool verbose){
 
     // create fstream object to write out pfm file 
     // open the file in binary
     fstream file(path.c_str(), ios::out | ios::binary);
 
-    
-    // init variables 
+    // init variables
     int type = im.type();
     string bands;
     int width = im.size().width, height = im.size().height;     // width and height of the image 
@@ -172,7 +180,7 @@ int WriteFilePFM(const Mat &im, string path, float scalef=1/255.0){
             bands = "PF";   // color
             break;
         default:
-            cout << "Unsupported image type, must be CV_32FC1 or CV_32FC3";
+            cerr << "Unsupported image type, must be CV_32FC1 or CV_32FC3";
             return -1;
     }
 
@@ -186,16 +194,20 @@ int WriteFilePFM(const Mat &im, string path, float scalef=1/255.0){
     file << height  << "\n";
     file << scalef  << "\n";
 
-    cout << setfill('=') << setw(19) << "=" << endl;
-    cout << "Writing image to pfm file: " << path << endl;
-    cout << "Little Endian?: "  << ((littleendian()) ? "true" : "false")   	<< endl;
-    cout << "width: "           << width                             		<< endl;
-    cout << "height: "          << height                            		<< endl;
-    cout << "scale: "           << scalef                            		<< endl;
+    if (verbose) {
+      cout << setfill('=') << setw(19) << "=" << endl;
+      cout << "Writing image to pfm file: " << path << endl;
+      cout << "Little Endian?: "  << ((littleendian()) ? "true" : "false")   	<< endl;
+      cout << "width: "           << width                             		<< endl;
+      cout << "height: "          << height                            		<< endl;
+      cout << "scale: "           << scalef                            		<< endl;
+    }
     
-    if(bands == "Pf"){          // handle 1-band image 
-        cout << "Writing grayscale image (1-band)" << endl; 
-        cout << "Writing into CV_32FC1 image" << endl;
+    if(bands == "Pf"){          // handle 1-band image
+        if (verbose) {
+            cout << "Writing grayscale image (1-band)" << endl;
+            cout << "Writing into CV_32FC1 image" << endl;
+        }
         for (int i=height-1; i >= 0; --i) {
             for(int j=0; j < width; ++j){
                 fvalue = im.at<float>(i,j);
@@ -204,8 +216,10 @@ int WriteFilePFM(const Mat &im, string path, float scalef=1/255.0){
             }
         }
     }else if(bands == "PF"){    // handle 3-band image
-        cout << "writing color image (3-band)" << endl;
-        cout << "writing into CV_32FC3 image" << endl; 
+        if (verbose) {
+            cout << "writing color image (3-band)" << endl;
+            cout << "writing into CV_32FC3 image" << endl;
+        }
         for (int i=height-1; i >= 0; --i) {
             for(int j=0; j < width; ++j){
                 vfvalue = im.at<Vec3f>(i,j);
@@ -213,10 +227,12 @@ int WriteFilePFM(const Mat &im, string path, float scalef=1/255.0){
             }
         }
     }else{
-        cout << "unknown bands description";
+        cerr << "unknown bands description";
         return -1;
     }
-    cout << setfill('=') << setw(19) << "=" << endl << endl;
+    if (verbose) {
+        cout << setfill('=') << setw(19) << "=" << endl << endl;
+    }
     return 0;
 }
 

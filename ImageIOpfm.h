@@ -23,7 +23,7 @@
 using namespace cv;
 using namespace std;
 
-int ReadFilePFM(Mat &im, string path);
-int WriteFilePFM(const Mat &im, string path, float scalef);
+int ReadFilePFM(Mat &im, string path, bool verbose = false);
+int WriteFilePFM(const Mat &im, string path, float scalef = 1.0f/255.0f, bool verbose = false);
 
 #endif
